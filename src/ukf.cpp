@@ -120,8 +120,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     is_initialized_ = true;
 
-    std::cout << "Initilizaed mean vector \n" << x_ << std::endl;
-    std::cout << "Initialized covariance matrix \n" << P_ << std::endl;
+    //std::cout << "Initilizaed mean vector \n" << x_ << std::endl;
+    //std::cout << "Initialized covariance matrix \n" << P_ << std::endl;
     return;
   }
 
@@ -130,16 +130,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   time_us_ = meas_package.timestamp_;
  // std::cout << dt;
 
-  std::cout << "\n\n\n\n\n\nNEW MEASUREMENT COMING IN\n\n";
+  //std::cout << "\nNEW MEASUREMENT COMING IN\n\n";
 
-  std::cout << "Old mean = \n" << x_ << "\n\n\n";
-  std::cout << "Old Covariance Matrix = \n" << P_ << "\n\n\n";
+  //std::cout << "Old mean = \n" << x_ << "\n\n\n";
+  //std::cout << "Old Covariance Matrix = \n" << P_ << "\n\n\n";
 
   Prediction(dt);
 
   PredictMeanAndCovariance();
-  std::cout << "Predicted mean = \n" << x_ << "\n\n\n";
-  std::cout << "Predicted covariance = \n" << P_ << "\n\n\n";
+  //std::cout << "Predicted mean = \n" << x_ << "\n\n\n";
+  //std::cout << "Predicted covariance = \n" << P_ << "\n\n\n";
 
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
     std::cout << "Radar Measurement coming in \n";
@@ -147,10 +147,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
   }
   else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    std::cout << "Laser measurement coming in \n";
     UpdateLidar(meas_package);
   }
-  std::cout << "Updated State = \n" << x_ << "\n\n\n";
-  std::cout << "Updated Covariance matrix = \n" << P_ << "\n\n\n";
+  //std::cout << "Updated State = \n" << x_ << "\n\n\n";
+  //std::cout << "Updated Covariance matrix = \n" << P_ << "\n\n\n";
 
 }
 
@@ -168,10 +169,10 @@ void UKF::Prediction(double delta_t) {
   */
   MatrixXd Xsig_aug(7, 7);
   Xsig_aug = AugmentedSigmaPoints();
-  std::cout << "Old Sigma Points = \n" << Xsig_aug << "\n\n\n";
-  std::cout << "delta t = \n" << delta_t << "\n\n\n";
+  //std::cout << "Old Sigma Points = \n" << Xsig_aug << "\n\n\n";
+  //std::cout << "delta t = \n" << delta_t << "\n\n\n";
   Xsig_pred_ = SigmaPointPrediction(Xsig_aug, delta_t);
-  std::cout << "New Sigma Points = \n" << Xsig_pred_ << "\n\n\n";
+  //std::cout << "New Sigma Points = \n" << Xsig_pred_ << "\n\n\n";
 }
 
 /**
@@ -189,7 +190,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   */
   VectorXd z(2);
   z = meas_package.raw_measurements_;
-  std::cout << "New measurement = \n" << z << "\n\n\n";
+  //std::cout << "New measurement = \n" << z << "\n\n\n";
 
   const int n_z = 2;
   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
@@ -205,7 +206,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     Zsig(1,i) = p_y;                        //p_y
   }
 
-  std::cout << "Zsig = \n" << Zsig << "\n\n\n";
+  //std::cout << "Zsig = \n" << Zsig << "\n\n\n";
 
   //mean predicted measurement
   VectorXd z_pred = VectorXd(n_z);
@@ -214,7 +215,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     z_pred = z_pred + weights_(i) * Zsig.col(i);
   }
 
-  std::cout << "Predicted state in measurement space = \n" << z_pred << "\n\n\n";
+  //std::cout << "Predicted state in measurement space = \n" << z_pred << "\n\n\n";
 
   //measurement covariance matrix S
   MatrixXd S = MatrixXd(n_z,n_z);
@@ -234,7 +235,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
           0, std_laspy_*std_laspy_;
   S = S + R;
 
-  std::cout << "Predicted covariance matrix in measurement space = \n" << S << "\n\n\n";
+  //std::cout << "Predicted covariance matrix in measurement space = \n" << S << "\n\n\n";
   //calculate cross correlation matrix
   MatrixXd Tc = MatrixXd(n_x_, n_z);
   Tc.fill(0.0);
@@ -258,6 +259,11 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   //update state mean and covariance matrix
   x_ = x_ + K * z_diff;
   P_ = P_ - K*S*K.transpose();
+
+  // Calculate NIS
+  double nis;
+  nis = z_diff.transpose() * S.inverse() * z_diff;
+  std::cout << "NIS = " << nis << "\n\n";
 }
 
 /**
@@ -275,7 +281,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   */
   VectorXd z(3);
   z = meas_package.raw_measurements_;
-  std::cout << "New measurement = \n" << z << "\n\n\n";
+  //std::cout << "New measurement = \n" << z << "\n\n\n";
 
   const int n_z = 3;
   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
@@ -297,7 +303,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     Zsig(2,i) = (p_x*v1 + p_y*v2 ) / sqrt(p_x*p_x + p_y*p_y);   //r_dot
   }
 
-  std::cout << "Zsig = \n" << Zsig << "\n\n\n";
+  //std::cout << "Zsig = \n" << Zsig << "\n\n\n";
 
   //mean predicted measurement
   VectorXd z_pred = VectorXd(n_z);
@@ -306,7 +312,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     z_pred = z_pred + weights_(i) * Zsig.col(i);
   }
 
-  std::cout << "Predicted state in measurement space = \n" << z_pred << "\n\n\n";
+  //std::cout << "Predicted state in measurement space = \n" << z_pred << "\n\n\n";
 
   //measurement covariance matrix S
   MatrixXd S = MatrixXd(n_z,n_z);
@@ -331,7 +337,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
           0, 0,std_radrd_*std_radrd_;
   S = S + R;
 
-  std::cout << "Predicted covariance matrix in measurement space = \n" << S << "\n\n\n";
+  //std::cout << "Predicted covariance matrix in measurement space = \n" << S << "\n\n\n";
   //calculate cross correlation matrix
   MatrixXd Tc = MatrixXd(n_x_, n_z);
   Tc.fill(0.0);
@@ -365,6 +371,12 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   //update state mean and covariance matrix
   x_ = x_ + K * z_diff;
   P_ = P_ - K*S*K.transpose();
+
+  // Calculate NIS
+  double nis;
+  nis = z_diff.transpose() * S.inverse() * z_diff;
+  std::cout << "NIS = " << nis << "\n\n";
+
 }
 
 MatrixXd UKF::AugmentedSigmaPoints() {
